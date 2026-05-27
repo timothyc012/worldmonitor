@@ -3,10 +3,14 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 test('ontology travel bridge panel is registered in the full UI', () => {
+  const app = readFileSync('src/App.ts', 'utf8');
   const panels = readFileSync('src/config/panels.ts', 'utf8');
   const layout = readFileSync('src/app/panel-layout.ts', 'utf8');
   const barrel = readFileSync('src/components/index.ts', 'utf8');
 
+  assert.match(app, /worldmonitor-ontology-travel-bridge-v1/);
+  assert.match(app, /panelSettings\[bridgeKey\] = \{/);
+  assert.match(app, /withoutBridge\.splice\(insertAt, 0, bridgeKey\)/);
   assert.match(panels, /'ontology-travel-bridge': \{ name: '01ontology Travel Bridge', enabled: true/);
   assert.match(layout, /OntologyTravelBridgePanel/);
   assert.match(layout, /createPanel\('ontology-travel-bridge', \(\) => new OntologyTravelBridgePanel\(\)\)/);

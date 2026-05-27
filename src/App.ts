@@ -644,6 +644,38 @@ export class App {
       }
     }
 
+    // One-time local integration migration: make the 01ontology bridge panel
+    // visible for existing dashboards that already have saved panel settings.
+    const ONTOLOGY_TRAVEL_BRIDGE_KEY = 'worldmonitor-ontology-travel-bridge-v1';
+    if (!localStorage.getItem(ONTOLOGY_TRAVEL_BRIDGE_KEY)) {
+      const bridgeKey = 'ontology-travel-bridge';
+      panelSettings[bridgeKey] = {
+        ...getEffectivePanelConfig(bridgeKey, currentVariant),
+        enabled: true,
+      };
+      try {
+        const rawOrder = localStorage.getItem(PANEL_ORDER_KEY);
+        const order = rawOrder ? JSON.parse(rawOrder) : [];
+        if (Array.isArray(order)) {
+          const withoutBridge = order.filter((key: string) => key !== bridgeKey);
+          const liveNewsIndex = withoutBridge.indexOf('live-news');
+          const insertAt = liveNewsIndex === -1 ? 0 : liveNewsIndex + 1;
+          withoutBridge.splice(insertAt, 0, bridgeKey);
+          localStorage.setItem(PANEL_ORDER_KEY, JSON.stringify(withoutBridge));
+        }
+        const rawBottomSet = localStorage.getItem(PANEL_ORDER_KEY + '-bottom-set');
+        const bottomSet = rawBottomSet ? JSON.parse(rawBottomSet) : [];
+        if (Array.isArray(bottomSet) && bottomSet.includes(bridgeKey)) {
+          localStorage.setItem(PANEL_ORDER_KEY + '-bottom-set', JSON.stringify(bottomSet.filter((key: string) => key !== bridgeKey)));
+        }
+      } catch {
+        localStorage.removeItem(PANEL_ORDER_KEY);
+        localStorage.removeItem(PANEL_ORDER_KEY + '-bottom-set');
+      }
+      saveToStorage(STORAGE_KEYS.panels, panelSettings);
+      localStorage.setItem(ONTOLOGY_TRAVEL_BRIDGE_KEY, 'done');
+    }
+
     const initialUrlState: ParsedMapUrlState | null = parseMapUrlState(window.location.search, mapLayers);
     if (initialUrlState.layers) {
       mapLayers = normalizeExclusiveChoropleths(
