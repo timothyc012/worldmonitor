@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve, dirname, extname } from 'path';
+import { existsSync } from 'fs';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { brotliCompress } from 'zlib';
 import { promisify } from 'util';
@@ -152,6 +153,55 @@ function polymarketPlugin(): Plugin {
           res.setHeader('Cache-Control', 'public, max-age=300');
           res.end('[]');
         }
+      });
+    },
+  };
+}
+
+function ontologyTravelBridgeDevPlugin(): Plugin {
+  return {
+    name: 'ontology-travel-bridge-dev',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (!req.url?.startsWith('/api/ontology/travel-bridge-status')) return next();
+
+        const ontologyRoot = process.env.ONTOLOGY_REPO_ROOT || resolve(process.cwd(), '../01ontology');
+        const requiredOntologyFiles = [
+          'ontology/travel.ttl',
+          'packs/travel/manifest.yaml',
+          'scripts/stage_worldmonitor_travel_snapshot.py',
+          'src/onto_kernel/bridge/worldmonitor_travel.py',
+        ];
+        const requiredWorldMonitorFiles = [
+          'scripts/export-travel-snapshot.mjs',
+        ];
+        const ontologyFiles = requiredOntologyFiles.map(path => ({
+          path,
+          present: existsSync(resolve(ontologyRoot, path)),
+        }));
+        const worldmonitorFiles = requiredWorldMonitorFiles.map(path => ({
+          path,
+          present: existsSync(resolve(process.cwd(), path)),
+        }));
+        const connected = [...ontologyFiles, ...worldmonitorFiles].every(file => file.present);
+
+        res.statusCode = connected ? 200 : 424;
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(JSON.stringify({
+          connected,
+          city: 'Munich',
+          pack: 'travel',
+          ontologyRoot,
+          worldmonitorRoot: process.cwd(),
+          ontologyFiles,
+          worldmonitorFiles,
+          commands: {
+            exportSnapshot: 'node scripts/export-travel-snapshot.mjs --city Munich --output /tmp/munich-worldmonitor-snapshot.json',
+            stageSnapshot: 'uv run python scripts/stage_worldmonitor_travel_snapshot.py --input /tmp/munich-worldmonitor-snapshot.json --city Munich --tenant-id travel-demo',
+          },
+          boundary: 'WorldMonitor owns live scraping/cache/export; 01ontology owns raw staging, review, promotion, evidence, and lineage.',
+        }));
       });
     },
   };
@@ -620,6 +670,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       htmlVariantPlugin(activeMeta, activeVariant, isDesktopBuild),
       polymarketPlugin(),
+      ontologyTravelBridgeDevPlugin(),
       rssProxyPlugin(),
       youtubeLivePlugin(),
       gpsjamDevPlugin(),

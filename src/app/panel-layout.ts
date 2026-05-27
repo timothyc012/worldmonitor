@@ -79,6 +79,7 @@ import {
   WsbTickerScannerPanel,
   AAIISentimentPanel,
   EnergyCrisisPanel,
+  OntologyTravelBridgePanel,
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
 import { focusInvestmentOnMap } from '@/services/investments-focus';
@@ -810,6 +811,7 @@ export class PanelLayoutManager implements AppModule {
     this.createNewsPanel('politics', 'panels.politics');
     this.createNewsPanel('tech', 'panels.tech');
     this.createNewsPanel('finance', 'panels.finance');
+    this.createPanel('ontology-travel-bridge', () => new OntologyTravelBridgePanel());
 
     this.createPanel('heatmap', () => new HeatmapPanel());
     this.createPanel('markets', () => new MarketPanel());

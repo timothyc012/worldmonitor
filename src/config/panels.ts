@@ -17,6 +17,7 @@ const _desktop = isDesktopRuntime();
 const FULL_PANELS: Record<string, PanelConfig> = {
   map: { name: 'Global Map', enabled: true, priority: 1 },
   'live-news': { name: 'Live News', enabled: true, priority: 1 },
+  'ontology-travel-bridge': { name: '01ontology Travel Bridge', enabled: true, priority: 1 },
   'live-webcams': { name: 'Live Webcams', enabled: true, priority: 1 },
   'windy-webcams': { name: 'Windy Live Webcam', enabled: false, priority: 2 },
   insights: { name: 'AI Insights', enabled: true, priority: 1 },
